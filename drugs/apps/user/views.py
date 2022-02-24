@@ -1,7 +1,7 @@
 import json
 import re
 
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 from django.http import JsonResponse
 from django.shortcuts import render
 
@@ -101,5 +101,51 @@ class RegisterView(View):
         login(request, user)
         # 注册时，用户名写到cookie，有效期15天
         response = JsonResponse({'code': 1, 'errmsg': '您已成功注册，正在跳转新世界'})
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+        return response
+
+
+# 用户登录
+class LoginView(View):
+
+    def post(self, request):
+        # 1 接收json数据
+        body = request.body
+        data_dict = json.loads(body)
+        username = data_dict.get('username')
+        password = data_dict.get('password')
+        remembered = data_dict.get('remembered')
+        # 2 验证数据是否为空  正则
+        if not all([username, password]):
+            return JsonResponse({'code': 400, 'errmsg': '缺少必要参数呦'})
+
+        import re
+        # 验证用户登录方式 手机 账号
+        if re.match('^1[3-9]\d{9}$', username):
+            # 手机号
+            User.USERNAME_FIELD = 'mobile'
+        else:
+            # account 是用户名
+            # 根据用户名从数据库获取 user 对象返回.
+            User.USERNAME_FIELD = 'username'
+
+        # 3 验证码用户名和密码是否正确
+        user = authenticate(username=username, password=password)
+        if not user:
+            return JsonResponse({'code': 400, 'errmsg': '用户名密码错误呦'})
+        print(user)
+        # 4 状态保持
+        login(request, user)
+
+        # 5 判断是否记住登录
+        if remembered:
+            # 如果记住:  设置为两周有效
+            request.session.set_expiry(None)
+        else:
+            # 如果没有记住: 关闭立刻失效
+            request.session.set_expiry(0)
+        # 6 返回响应
+        # 注册时用户名写入到cookie，有效期15天
+        response = JsonResponse({'code': 1, 'errmsg': 'ok'})
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
         return response
