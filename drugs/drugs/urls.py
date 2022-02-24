@@ -18,6 +18,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # 用户表
+    # user
     path('', include('apps.user.urls')),
+    # 返回验证码
+    path('', include('apps.verifications.urls')),
 ]
