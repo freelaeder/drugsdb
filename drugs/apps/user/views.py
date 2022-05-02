@@ -1,17 +1,27 @@
 import json
 import re
+import time
 
 from django.contrib.auth import login, authenticate
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 # Create your views here.
 from django.views import View
 # 导入user models.py
+from rest_framework import status
+from rest_framework.generics import ListAPIView, GenericAPIView
+from rest_framework.mixins import ListModelMixin
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+
 from apps.user.models import *
 
-
 # 验证用户名
+from apps.user.serializers import UserSerializers
+
+
 class UserInfoView(View):
     def get(self, request):
         # 接受username
@@ -60,8 +70,8 @@ class RegisterView(View):
             return JsonResponse({'code': 400, 'errmsg': '传递的参数少了呦'})
         # 后端再次验证参数
         # 判断用户名是否是2-5个字符
-        if not re.match(r'^[a-zA-Z0-9_]{2,5}$', username):
-            return JsonResponse({'code': 400, 'errmsg': 'username格式有误!'})
+        # if not re.match(r'^[a-zA-Z0-9_]{1,5}$', username):
+        #     return JsonResponse({'code': 400, 'errmsg': 'username格式有误!'})
         # 判断密码是否是2-20个数字
         if not re.match(r'^[0-9A-Za-z]{2,20}$', password):
             return JsonResponse({'code': 400, 'errmsg': 'password格式有误!'})
@@ -146,6 +156,68 @@ class LoginView(View):
             request.session.set_expiry(0)
         # 6 返回响应
         # 注册时用户名写入到cookie，有效期15天
-        response = JsonResponse({'code': 1, 'errmsg': 'ok'})
+        response = JsonResponse({'code': 1, 'errmsg': 'ok', 'username': user.username})
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
         return response
+
+
+# 保存用户基本信息
+class SaveInfo(View):
+    # 更新数据
+    def post(self, request):
+        # 获取参数
+        data_dict = json.loads(request.body)
+        print(data_dict)
+        # {'username': '12', 'sex': '0', 'email': 'yanglo67@qq.com', 'desc': '123', 'tecs': ['html', 'css', 'celery']}
+        username = data_dict.get('username')
+        # 旧的名字
+        oldusername = data_dict.get('oldusername')
+        sex = data_dict.get('sex')
+        email = data_dict.get('email')
+        desc = data_dict.get('desc')
+        tecs = data_dict.get('tecs')
+        print(f'tecs{tecs}')
+        school = data_dict.get('school')
+        # 验证参数
+        if not all([username, sex, email, desc, oldusername, school]):
+            return JsonResponse({'code': 0, 'errmsg': '参数不够'})
+        # 连接数据库更新数据
+        try:
+            user = User.objects.filter(username=oldusername).update(gender=sex, email=email, description=desc,
+                                                                    username=username, tecs=tecs, school=school)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 0, 'errmsg': '数据库更新失败'})
+
+        return JsonResponse({'code': 1, 'errmsg': 'ok', 'user': user})
+
+
+# 获取用户信息
+class UserSaveModel(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializers
+    lookup_field = 'username'
+
+
+class SaveImg(APIView):
+    def post(self, request):
+        # <MultiValueDict: {'file': [<InMemoryUploadedFile: Group.png (image/png)>]}>
+        # 获取图片
+        img = request.FILES.get('file')
+        # 获取用户名
+        user = request.data.get('username')
+        file_name = './static/img/' + str(int(time.time())) + '.' + img.name.split('.')[-1]  # 构造文件名以及文件路径
+        print(file_name[1:])
+        # if img.name.split('.')[-1] not in ['jpeg', 'jpg', 'png']:
+        #     return HttpResponse('输入文件有误')
+        try:
+            with open(file_name, 'wb+') as f:
+                f.write(img.read())
+            # 更新图片地址
+            # 拼接url
+            imgurl = 'http://192.168.232.128:8300' + file_name[1:]
+            print(imgurl)
+            User.objects.filter(username=user).update(default_image=imgurl)
+        except Exception as e:
+            print(e)
+        return JsonResponse({'code': 1, 'errmsg': 'ok', 'default_img': imgurl, 'message': '您已上传成功，快去看看吧'})

@@ -22,4 +22,6 @@ urlpatterns = [
     path('', include('apps.user.urls')),
     # 返回验证码
     path('', include('apps.verifications.urls')),
+    # blog
+    path('', include('apps.blog.urls')),
 ]

@@ -24,7 +24,7 @@ SECRET_KEY = '5r5@^rzke-9oa+7m)wi)bubg$*9mpmp9ccfyw$a*=^j+iua@qg'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 # 添加可允许访问的地址
-ALLOWED_HOSTS = ['0.0.0.0', '192.168.232.128']
+ALLOWED_HOSTS = ['0.0.0.0', '192.168.232.128', '*']
 
 # Application definition
 
@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'corsheaders',
     # 返回验证码
     'apps.verifications',
+    # blog
+    'apps.blog',
 ]
 
 MIDDLEWARE = [
@@ -91,7 +93,7 @@ DATABASES = {
         'PORT': 3306,  # 数据库端口
         'USER': 'root',  # 数据库用户名
         'PASSWORD': 'mysql',  # 数据库用户密码
-        'NAME': 'drugdb'  # 数据库名字
+        'NAME': 'blogdb'  # 数据库名字
     }
 }
 
@@ -211,3 +213,14 @@ LOGGING = {
 
 # 替换django自带的用户模型
 AUTH_USER_MODEL = 'user.User'
+
+''' STATIC_URL用于配置指定通过那个URL地址访问静态文件'''
+STATIC_URL = '/static/'  # http://127.0.0.1:8000/statics/
+''' STATICFILES_DIRS 用于配置静态文件的存储路径,即静态文件在服务器端的存储位置'''
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)  # 元组
+
+# 指定自定义的Django文件存储类
+DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.FastDFSStorage'
+
+# FastDFS相关参数
+FDFS_BASE_URL = 'http://192.168.232.128:8888/'
