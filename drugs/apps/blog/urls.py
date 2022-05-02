@@ -1,7 +1,8 @@
-
-from django.contrib import admin
 from django.urls import path
 
+from apps.blog.views import ShowArticleList
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('article/queryArticlePage', ShowArticleList.as_view()),
+
 ]

@@ -32,16 +32,3 @@ class User(AbstractUser):
         verbose_name = '用户管理'
         verbose_name_plural = verbose_name
 
-# #  # 技术栈
-# class Tec(models.Model):
-#     name = models.CharField(max_length=200, verbose_name='技术栈')
-#     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户', related_name='tecs')
-#
-#     class Meta:
-#         db_table = 'tb_tec'
-#         verbose_name = '技术栈'
-
-#
-# # 文章排行，文章总数，文章获赞数，文章创建日期，
-# class Articles(models.Model):
-#
