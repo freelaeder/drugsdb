@@ -8,17 +8,22 @@ from django.views import View
 # 连接数据库
 from pymysql import connect
 
-
 # 获取列表详情页
+from apps.blog.models import TBlog
+
+
 class ShowArticleList(View):
     def post(self, request):
         data_dict = json.loads(request.body)
         print(data_dict)
         # {'blogStatus': 1, 'currentPage': 1, 'pageSize': 20}
+        # blog的状态
         blogStatus = data_dict.get('blogStatus')
+        # 当前是第几次请求
         currentPage = data_dict.get('currentPage')
+        # 请求的页数
         pageSize = data_dict.get('pageSize')
-        # 创建Connection连接
+        # 创建Connection连接mysql
         conn = connect(host='127.0.0.1', port=3306, database='blogdb', user='root', password='mysql',
                        charset='utf8')
         # 获得Cursor对象
@@ -62,14 +67,17 @@ class ShowArticleList(View):
                 # result[i]['blog_content'] = blog_list[i][3]
                 # result[i]['create_time'] = blog_list[i][4]
             # 拼接数据返回
+            # 获取blog的总数
+            blog_num = TBlog.objects.count()
+            print(blog_num)
             data = {
                 'currentPage': currentPage,
                 'pageSize': pageSize,
-                'total': 61,
+                'total': blog_num,
                 'result': result,
             }
         except Exception as e:
             print(e)
-            return JsonResponse({'code': 405, 'msg': 'err', 'data': data})
+            return JsonResponse({'code': 405, 'msg': '数据已经全部返回', 'data': data})
 
         return JsonResponse({'code': 1, 'msg': 'ok', 'data': data})
