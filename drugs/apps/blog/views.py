@@ -9,7 +9,7 @@ from django.views import View
 from pymysql import connect
 
 # 获取列表详情页
-from apps.blog.models import TBlog
+from apps.blog.models import TBlog, TBlogSort, MtBlogBlogTag, TBlogTag
 
 
 class ShowArticleList(View):
@@ -40,7 +40,7 @@ class ShowArticleList(View):
         #         f'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.clicks desc limit {pageSize * (currentPage - 1)},{(pageSize * (currentPage - 1)) + 20}')
         try:
             blog_data = cs1.execute(
-                f'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.clicks desc limit {pageSize * (currentPage - 1)},{(pageSize * (currentPage - 1)) + 20}')
+                f'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name,d.cover_url from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.clicks desc limit {pageSize * (currentPage - 1)},{(pageSize * (currentPage - 1)) + 10}')
             # 打印获取的行数
             # print(blog_data)
             # 获取全部
@@ -59,6 +59,8 @@ class ShowArticleList(View):
                     'blog_content': blog_list[i][3],
                     'create_time': blog_list[i][4],
                     'sort_name': blog_list[i][5],
+                    'cover_url': blog_list[i][6],
+                    'uid': blog_list[i][0],
                 }
                 result.append(result_data)
                 # result[i]['blog_sort_id'] = blog_list[i][0]
@@ -81,3 +83,60 @@ class ShowArticleList(View):
             return JsonResponse({'code': 405, 'msg': '数据已经全部返回', 'data': data})
 
         return JsonResponse({'code': 1, 'msg': 'ok', 'data': data})
+
+
+# 获取指定页数据
+class GetArticleDetail(View):
+    def get(self, request, uid):
+        print(uid)
+        # 连接数据库查询返回
+        try:
+            result = []
+
+            data = TBlog.objects.filter(uid=uid)
+            print(type(uid))
+            # 获取sort_id 以下两种都可以
+            # 获取 sort_name
+            sort_id = TBlog.objects.filter(uid=uid).values('blog_sort_id').values()[0].get('blog_sort_id')
+            # sort_id = TBlog.objects.get(uid=uid)
+            # print(sort_id.blog_sort_id)
+
+            sort_name = TBlogSort.objects.get(uid=sort_id)
+            # 获取 sort_name
+            sort_name = sort_name.sort_name
+            print(sort_name)
+            # 获取tag
+            tag_id = MtBlogBlogTag.objects.filter(blog_id=uid)
+            # 假如有多个先储存起来，再一一获取tag名字
+            tag_list = []
+            # 定义返回的列表
+            blog_tags = []
+            for item in tag_id:
+                blog_tags.append({
+                    'blog_tag_id': item.blog_tag_id,
+                    'tag_name': TBlogTag.objects.filter(uid=item.blog_tag_id).values()[0].get('tag_name'),
+                })
+                # tag_list.append(item.blog_tag_id)
+                # print(TBlogTag.objects.filter(uid=item.blog_tag_id).values()[0].get('tag_name'))
+            print(tag_list)
+
+            for item in data:
+                result.append({
+                    'uid': item.uid,
+                    'blog_author_id': item.blog_author_id,
+                    'blog_content': item.blog_content,
+                    'blog_title': item.blog_title,
+                    'create_time': item.create_time,
+                    'cover_url': item.cover_url,
+                    'clicks': item.clicks,
+                    'blod_summary': item.blog_summary,
+                    'update_time': item.update_time,
+                    'sort_name': sort_name,
+                    'blog_tags': blog_tags,
+
+                })
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 404, 'msg': 'defeated', })
+        return JsonResponse({'code': 1, 'msg': 'succes', 'data': result})
