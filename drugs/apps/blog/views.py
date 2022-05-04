@@ -128,11 +128,12 @@ class GetArticleDetail(View):
                     'blog_title': item.blog_title,
                     'create_time': item.create_time,
                     'cover_url': item.cover_url,
-                    'clicks': item.clicks,
                     'blod_summary': item.blog_summary,
                     'update_time': item.update_time,
                     'sort_name': sort_name,
                     'blog_tags': blog_tags,
+                    'clicks': item.clicks,
+                    'order_num': item.order_num,
 
                 })
 

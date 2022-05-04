@@ -220,4 +220,10 @@ class SaveImg(APIView):
             User.objects.filter(username=user).update(default_image=imgurl)
         except Exception as e:
             print(e)
-        return JsonResponse({'code': 1, 'errmsg': 'ok', 'default_img': imgurl, 'message': '您已上传成功，快去看看吧'})
+        data = [
+            {
+                'name': file_name,
+                'url': imgurl,
+            }
+        ]
+        return JsonResponse({'code': 1, 'errmsg': 'ok', 'default_img': imgurl, 'data': data, 'message': '您已上传成功，快去看看吧'})
