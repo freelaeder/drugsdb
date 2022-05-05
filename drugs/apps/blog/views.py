@@ -140,4 +140,54 @@ class GetArticleDetail(View):
         except Exception as e:
             print(e)
             return JsonResponse({'code': 404, 'msg': 'defeated', })
-        return JsonResponse({'code': 1, 'msg': 'succes', 'data': result})
+        return JsonResponse({'code': 1, 'msg': 'success', 'data': result})
+
+
+# 获取全部的文章分类标签
+class GetArticleSortAll(View):
+
+    def post(self, request):
+        result = []
+        # 连接数据库返回数据
+        try:
+            sort_data = TBlogSort.objects.all()
+            for item in sort_data:
+                result.append({
+                    'clicks': item.clicks,
+                    'create_time': item.create_time,
+                    'intro': item.intro,
+                    'order_num': item.order_num,
+                    'sort_name': item.sort_name,
+                    'uid': item.uid,
+                    'update_time': item.update_time,
+                })
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 500, 'msg': 'defeated', 'data': '服务器错误'})
+
+        return JsonResponse({'code': 1, 'msg': 'success', 'data': result})
+
+
+#
+class GetArticleTagAll(View):
+    def post(self, request):
+        # 连接数据库返回数据
+        try:
+            tb_data = TBlogTag.objects.all()
+            # 定义数组格式化数据
+            result = []
+            for item in tb_data:
+                result.append({
+                    'clicks': item.clicks,
+                    'create_time': item.create_time,
+                    'order_num': item.order_num,
+                    'tag_name': item.tag_name,
+                    'uid': item.uid,
+                    'update_time': item.update_time,
+                })
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 500, 'msg': 'defeated', 'data': '服务器错误'})
+
+        return JsonResponse({'code': 1, 'msg': 'success', 'data': result})
