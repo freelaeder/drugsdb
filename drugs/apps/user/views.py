@@ -15,8 +15,9 @@ from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-
+import pytz
 from apps.user.models import *
+from django.utils import timezone
 
 # 验证用户名
 from apps.user.serializers import UserSerializers
@@ -206,6 +207,10 @@ class SaveImg(APIView):
         img = request.FILES.get('file')
         # 获取用户名
         user = request.data.get('username')
+        # 直接获取当地时间  格式化
+        cn = pytz.timezone('Asia/Shanghai')
+        # 当前时间
+        d2 = timezone.now().astimezone(tz=cn).strftime("%Y-%m-%d %H:%M:%S")
         file_name = './static/img/' + str(int(time.time())) + '.' + img.name.split('.')[-1]  # 构造文件名以及文件路径
         print(file_name[1:])
         # if img.name.split('.')[-1] not in ['jpeg', 'jpg', 'png']:

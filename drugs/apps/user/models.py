@@ -12,6 +12,7 @@ class User(AbstractUser):
         (1, 'female')
     )
     mobile = models.CharField(max_length=11, unique=True)
+    # 技术栈
     tecs = models.CharField(default='', max_length=100)
     # 添加邮箱字段
     email_active = models.BooleanField(default=False, verbose_name='邮箱验证状态')

@@ -1,18 +1,24 @@
 import json
 
+import pytz
+from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import render
+import uuid
 
 # Create your views here.
+from django.utils import timezone
 from django.views import View
 # 连接数据库
 from pymysql import connect
 
-# 获取列表详情页
 from apps.blog.models import TBlog, TBlogSort, MtBlogBlogTag, TBlogTag
+# 分页
+from django.core.paginator import Paginator
 
 
 class ShowArticleList(View):
+    # 获取列表详情页
+
     def post(self, request):
         data_dict = json.loads(request.body)
         print(data_dict)
@@ -29,49 +35,37 @@ class ShowArticleList(View):
         # 获得Cursor对象
         cs1 = conn.cursor()
         # 请求sql
-        # select d.uid,d.blog_title,d.blog_summary,d.blog_author_id,s.sort_name,d.clicks,d.blog_content,d.create_time from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by clicks desc limit 0, 20;
-        # select d.uid,d.blog_title,d.blog_summary,blog_content,d.create_time,s.sort_named from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by clicks desc limit 0, 20;
-        # 判断是第几次请求
-        # if currentPage == 1:
-        #     blog_data = cs1.execute(
-        #         f'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.clicks desc limit 0,{pageSize}')
-        # else:
-        #     blog_data = cs1.execute(
-        #         f'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.clicks desc limit {pageSize * (currentPage - 1)},{(pageSize * (currentPage - 1)) + 20}')
         try:
             blog_data = cs1.execute(
-                f'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name,d.cover_url from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.clicks desc limit {pageSize * (currentPage - 1)},{(pageSize * (currentPage - 1)) + 10}')
+                'select d.uid,d.blog_title,d.blog_summary,d.blog_content,d.create_time,s.sort_name,d.cover_url from t_blog as d left join t_blog_sort as s on d.blog_sort_id = s.uid order by d.create_time desc')
             # 打印获取的行数
             # print(blog_data)
             # 获取全部
-            als = cs1.fetchall()
-            print(type(als))
             # 转化为数组
-            blog_list = list(als)
-            # print(blog_list[20][0])
+            blog_list = list(cs1.fetchall())
+            # 10 条为一页
+            item = Paginator(blog_list, pageSize)
+            # 获取当前数组的长度
+            item_length = len(item.page(currentPage).object_list)
+            print(item_length, '当前数组长度')
+
             result = []
             # 遍历要根据获取的数组长度遍历，不能根据pageSize ，万一没有数据，该程序报错
-            for i in range(len(als)):
-                result_data = {
-                    'blog_sort_id': blog_list[i][0],
-                    'blog_title': blog_list[i][1],
-                    'blog_summary': blog_list[i][2],
-                    'blog_content': blog_list[i][3],
-                    'create_time': blog_list[i][4],
-                    'sort_name': blog_list[i][5],
-                    'cover_url': blog_list[i][6],
-                    'uid': blog_list[i][0],
-                }
-                result.append(result_data)
-                # result[i]['blog_sort_id'] = blog_list[i][0]
-                # result[i]['blog_title'] = blog_list[i][1]
-                # result[i]['blog_summary'] = blog_list[i][2]
-                # result[i]['blog_content'] = blog_list[i][3]
-                # result[i]['create_time'] = blog_list[i][4]
+            for i in range(item_length):
+                result.append({
+                    'blog_sort_id': item.page(currentPage).object_list[i][0],
+                    'blog_title': item.page(currentPage).object_list[i][1],
+                    'blog_summary': item.page(currentPage).object_list[i][2],
+                    'blog_content': item.page(currentPage).object_list[i][3],
+                    'create_time': item.page(currentPage).object_list[i][4],
+                    'sort_name': item.page(currentPage).object_list[i][5],
+                    'cover_url': item.page(currentPage).object_list[i][6],
+                    'uid': item.page(currentPage).object_list[i][0],
+                })
+
             # 拼接数据返回
             # 获取blog的总数
             blog_num = TBlog.objects.count()
-            print(blog_num)
             data = {
                 'currentPage': currentPage,
                 'pageSize': pageSize,
@@ -191,3 +185,84 @@ class GetArticleTagAll(View):
             return JsonResponse({'code': 500, 'msg': 'defeated', 'data': '服务器错误'})
 
         return JsonResponse({'code': 1, 'msg': 'success', 'data': result})
+
+
+# 保存博客
+class SaveArtcile(View):
+    def post(self, request):
+        data = {}
+        # 获取当前时间  utc 时间
+        # d1 = timezone.now()
+        # print(d1)
+        # 直接获取当地时间  格式化
+        cn = pytz.timezone('Asia/Shanghai')
+        # 当前时间
+        d2 = timezone.now().astimezone(tz=cn).strftime("%Y-%m-%d %H:%M:%S")
+        print(d2)
+        # 2022-05-05 23:24:17
+        # 根据当地的时间动态生成uuid，保证该uuid不会重复
+        uuid_data = uuid.uuid3(uuid.NAMESPACE_DNS, d2)
+        print(f'uuid_data-------------------------{uuid_data}')
+        # 开启事务
+        with transaction.atomic():
+            # 创建事务回滚点
+            save_id = transaction.savepoint()
+            try:
+
+                # 先获取数据 ，创建t_blog 在根据uuid创建 mt_blog_blog_tag
+                blog_data = json.loads(request.body)
+                # 博客内容
+                blogContent = blog_data.get('blogContent')
+                # 博客分类
+                blogSortId = blog_data.get('blogSortId')
+                # 博客状态 1 发布；2 下架；3 草稿；
+                blogStatus = blog_data.get('blogStatus')
+                # 博客介绍
+                blogSummary = blog_data.get('blogSummary')
+                # 博客标签
+                blogTagIds = blog_data.get('blogTagIds')
+                # 博客标题
+                blogTitle = blog_data.get('blogTitle')
+                # 博客展示图片
+                coverUrl = blog_data.get('coverUrl')
+                # 是否评论 ：1 开启；2 关闭',
+                isOpenComment = blog_data.get('isOpenComment')
+                # 是否为私密文章 ：1 是；2 否',
+                isPrivate = blog_data.get('isPrivate')
+                # 是否原创 1 原创；2转载；3 翻译
+                isOriginal = blog_data.get('isOriginal')
+                # 排序
+                order = blog_data.get('order')
+                # 文章来源地址
+                originAddress = blog_data.get('originAddress') if blog_data.get('originAddress') else ""
+                # 推荐等级
+                recommendLevel = blog_data.get('recommendLevel')
+                # 判断参数是否完整
+                if not all(
+                        [blogContent, blogSummary, blogStatus, blogSortId, blogTagIds, blogTitle, coverUrl, isOriginal,
+                         isOpenComment, isPrivate, order, recommendLevel]):
+                    return JsonResponse({'code': 404, 'msg': 'defeated', 'data': '参数不够'})
+                # 创建博客详情表数据
+                TBlog.objects.create(
+                    uid=uuid_data, blog_title=blogTitle, blog_summary=blogSummary, is_original=isOriginal,
+                    origin_address=originAddress, blog_sort_id=blogSortId, recommend_level=recommendLevel,
+                    order_num=order, is_open_comment=isOpenComment, is_private=isPrivate, blog_status=blogStatus,
+                    cover_url=coverUrl, blog_content=blogContent, create_time=d2, update_time=d2, clicks=0
+                )
+                # 根据博客在创建该博客的标签，移至else
+
+            except Exception as e:
+                print(e)
+                transaction.savepoint_rollback(save_id)
+                return JsonResponse({'code': 500, 'msg': 'defeated', 'data': '服务器错误'})
+            else:
+                #  # 根据博客在创建该博客的标签，
+                # 遍历blogTagIds
+                for item in blogTagIds:
+                    MtBlogBlogTag.objects.create(blog_id=uuid_data, blog_tag_id=item, create_time=d2, update_time=d2,
+                                                 blog_is_private=isPrivate)
+
+            # 提交成功，显示提交事务
+            transaction.savepoint_commit(save_id)
+
+        return JsonResponse({'code': 1, 'msg': 'success', 'data': data})

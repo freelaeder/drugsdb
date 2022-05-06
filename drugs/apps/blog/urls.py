@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.blog.views import ShowArticleList, GetArticleDetail, GetArticleSortAll, GetArticleTagAll
+from apps.blog.views import ShowArticleList, GetArticleDetail, GetArticleSortAll, GetArticleTagAll, SaveArtcile
 
 urlpatterns = [
     # 获取blog列表页
@@ -14,4 +14,6 @@ urlpatterns = [
     # 获取全部的blog tag 标签
     # articleTag/queryArticleTagAll
     path('articleTag/queryArticleTagAll', GetArticleTagAll.as_view()),
+    # 保存博客
+    path('article/saveArticle', SaveArtcile.as_view()),
 ]
