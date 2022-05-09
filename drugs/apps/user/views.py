@@ -1,7 +1,7 @@
 import json
 import re
 import time
-
+import os
 from django.contrib.auth import login, authenticate
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
@@ -210,18 +210,31 @@ class SaveImg(APIView):
         # 直接获取当地时间  格式化
         cn = pytz.timezone('Asia/Shanghai')
         # 当前时间
-        d2 = timezone.now().astimezone(tz=cn).strftime("%Y-%m-%d %H:%M:%S")
-        file_name = './static/img/' + str(int(time.time())) + '.' + img.name.split('.')[-1]  # 构造文件名以及文件路径
-        print(file_name[1:])
+        d2 = timezone.now().astimezone(tz=cn).strftime("%Y-%m-%d")
+        # /home/lon/Desktop/drugsdb/drugs/static/img
+        path = f'./static/img/{d2}'
+        # 创建当天文件夹
+        if os.path.exists(path):
+            pass
+        else:
+            os.mkdir(path)
+            print(f'创建文件夹{path}')
+        # 构造文件名以及文件路径
+        file_name = path + '/' + str(int(time.time())) + '.' + img.name.split('.')[-1]
+        print(file_name[1:], 'file_name')
+        print(file_name, 'file_name')
+
         # if img.name.split('.')[-1] not in ['jpeg', 'jpg', 'png']:
         #     return HttpResponse('输入文件有误')
+
         try:
             with open(file_name, 'wb+') as f:
                 f.write(img.read())
             # 更新图片地址
             # 拼接url
             imgurl = 'http://192.168.232.128:8300' + file_name[1:]
-            print(imgurl)
+            # print(imgurl, 'imgurls---------------------')
+            # 更新图片地址
             User.objects.filter(username=user).update(default_image=imgurl)
         except Exception as e:
             print(e)
