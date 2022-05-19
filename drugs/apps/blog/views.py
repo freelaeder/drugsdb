@@ -88,21 +88,23 @@ class GetArticleDetail(View):
             result = []
 
             data = TBlog.objects.filter(uid=uid)
-            print(type(uid))
+            # print(type(uid))
             # 获取sort_id 以下两种都可以
             # 获取 sort_name
             sort_id = TBlog.objects.filter(uid=uid).values('blog_sort_id').values()[0].get('blog_sort_id')
+            # print(sort_id, 'sort_id')
             # sort_id = TBlog.objects.get(uid=uid)
             # print(sort_id.blog_sort_id)
 
             sort_name = TBlogSort.objects.get(uid=sort_id)
             # 获取 sort_name
             sort_name = sort_name.sort_name
-            print(sort_name)
+            # print(sort_name, 'sort_name')
             # 获取tag
             tag_id = MtBlogBlogTag.objects.filter(blog_id=uid)
+            print(tag_id, 'tag_id')
             # 假如有多个先储存起来，再一一获取tag名字
-            tag_list = []
+            # tag_list = []
             # 定义返回的列表
             blog_tags = []
             for item in tag_id:
@@ -111,8 +113,14 @@ class GetArticleDetail(View):
                     'tag_name': TBlogTag.objects.filter(uid=item.blog_tag_id).values()[0].get('tag_name'),
                 })
                 # tag_list.append(item.blog_tag_id)
-                # print(TBlogTag.objects.filter(uid=item.blog_tag_id).values()[0].get('tag_name'))
-            print(tag_list)
+                print(TBlogTag.objects.filter(uid=item.blog_tag_id).values()[0])
+                # {'uid': '3b767f40-2cbf-11ec-86ae-0da8227970f6', 'tag_name': 'js', 'clicks': 0,
+                # 'order_num': 0, 'create_time': '2021-10-14 15:20:38', 'update_time': '2021-10-14 15:20:38'}
+                print(TBlogTag.objects.filter(uid=item.blog_tag_id).values('tag_name')[0])
+                # {'tag_name': 'js'}  values 指定字段
+                print(TBlogTag.objects.filter(uid=item.blog_tag_id).values()[0].get('tag_name'))
+            #     js
+            # print(tag_list)
 
             for item in data:
                 result.append({

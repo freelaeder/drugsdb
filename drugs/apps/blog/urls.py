@@ -14,6 +14,8 @@ urlpatterns = [
     # 获取全部的blog tag 标签
     # articleTag/queryArticleTagAll
     path('articleTag/queryArticleTagAll', GetArticleTagAll.as_view()),
+    # blog类别页获取hot分类标签  articleTag/queryHotArticleTagPage
+    path('articleTag/queryHotArticleTagPage', GetArticleTagAll.as_view()),
     # 保存博客
     path('article/saveArticle', SaveArtcile.as_view()),
 ]
