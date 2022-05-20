@@ -34,6 +34,7 @@ class ShowArticleList(View):
                        charset='utf8')
         # 获得Cursor对象
         cs1 = conn.cursor()
+        # 根据pagesize
         # 请求sql
         try:
             blog_data = cs1.execute(
@@ -274,3 +275,38 @@ class SaveArtcile(View):
             transaction.savepoint_commit(save_id)
 
         return JsonResponse({'code': 1, 'msg': 'success', 'data': data})
+
+
+class GetHotArticlePage(View):
+    # 获取点击排行
+    def post(self, request):
+        try:
+            data = TBlog.objects.order_by('-clicks')[:5]
+            result = []
+            for item in data:
+                result.append({
+                    'blog_author_id': item.blog_author_id,
+                    'blog_content': item.blog_content,
+                    'blog_sort_id': item.blog_sort_id,
+                    'blog_status': item.blog_status,
+                    'blog_summary': item.blog_summary,
+                    'blog_title': item.blog_title,
+                    'clicks': item.clicks,
+                    'cover_url': item.cover_url,
+                    'create_time': item.create_time,
+                    'is_open_comment': item.is_open_comment,
+                    'is_original': item.is_original,
+                    'is_private': item.is_private,
+                    'order_num': item.order_num,
+                    'origin_address': item.origin_address,
+                    'recommend_level': item.recommend_level,
+                    'uid': item.uid,
+                    'update_time': item.update_time,
+                })
+
+            print(data)
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 500, 'msg': 'defeated', })
+        return JsonResponse({'code': 1, 'msg': 'success', 'data': result})

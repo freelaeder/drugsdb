@@ -1,6 +1,7 @@
 from django.urls import path
 
-from apps.blog.views import ShowArticleList, GetArticleDetail, GetArticleSortAll, GetArticleTagAll, SaveArtcile
+from apps.blog.views import ShowArticleList, GetArticleDetail, GetArticleSortAll, GetArticleTagAll, SaveArtcile, \
+    GetHotArticlePage
 
 urlpatterns = [
     # 获取blog列表页
@@ -18,4 +19,6 @@ urlpatterns = [
     path('articleTag/queryHotArticleTagPage', GetArticleTagAll.as_view()),
     # 保存博客
     path('article/saveArticle', SaveArtcile.as_view()),
+    # article/queryHotArticlePage 获取点击排行
+    path('article/queryHotArticlePage', GetHotArticlePage.as_view()),
 ]
