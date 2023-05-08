@@ -42,9 +42,15 @@ INSTALLED_APPS = [
     'corsheaders',
     # 返回验证码
     'apps.verifications',
+    # ' rest_framework',
     # blog
     'apps.blog',
+    'apps.wxapp',
+    # 'werkzeug_debugger_runserver',
+    # 'django_extensions',
+
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -55,7 +61,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 跨域请求解决
-    'corsheaders.middleware.CorsMiddleware'
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'drugs.urls'
@@ -138,6 +145,7 @@ STATIC_URL = '/static/'
 CORS_ORIGIN_WHITELIST = (
     'http://127.0.0.1:8080',
     'http://localhost:3000',
+    'http://localhost:3001',
     'http://192.168.83.64:3000',
     'http://freelaeder.osv.ink',
     'http://freelaeder.cn:9000',

@@ -304,7 +304,50 @@ class GetHotArticlePage(View):
                     'update_time': item.update_time,
                 })
 
-            print(data)
+            # print(data)
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({'code': 500, 'msg': 'defeated', })
+        return JsonResponse({'code': 1, 'msg': 'success', 'data': result})
+
+
+# GetArticleAll2 获取推荐等级数据
+class GetArticleAll2(View):
+    def post(self, request):
+        # 获取数据
+        data_dict = json.loads(request.body)
+        # 获取推荐等级
+        recommendLevel = data_dict.get('recommendLevel')
+        if not recommendLevel:
+            return JsonResponse({'code': 404, 'msg': '参数错误', })
+
+        result = []
+        try:
+            data = TBlog.objects.filter(recommend_level=recommendLevel).order_by('-create_time', 'order_num')[
+                   :recommendLevel + 1]
+            result = []
+            for item in data:
+                result.append({
+                    'blog_author_id': item.blog_author_id,
+                    'blog_content': item.blog_content,
+                    'blog_sort_id': item.blog_sort_id,
+                    'blog_status': item.blog_status,
+                    'blog_summary': item.blog_summary,
+                    'blog_title': item.blog_title,
+                    'clicks': item.clicks,
+                    'cover_url': item.cover_url,
+                    'create_time': item.create_time,
+                    'is_open_comment': item.is_open_comment,
+                    'is_original': item.is_original,
+                    'is_private': item.is_private,
+                    'order_num': item.order_num,
+                    'origin_address': item.origin_address,
+                    'recommend_level': item.recommend_level,
+                    'uid': item.uid,
+                    'update_time': item.update_time,
+                    'sort_name': TBlogSort.objects.filter(uid=item.blog_sort_id).values()[0].get('sort_name')
+                })
 
         except Exception as e:
             print(e)

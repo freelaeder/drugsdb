@@ -34,4 +34,6 @@ urlpatterns = [
     path('', include('apps.verifications.urls')),
     # blog
     path('', include('apps.blog.urls')),
+    # wxapp
+    path('wx/',include('apps.wxapp.urls')),
 ]

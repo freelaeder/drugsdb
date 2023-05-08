@@ -495,12 +495,20 @@ class TbUsersGroups(models.Model):
 
 class TbUsersUserPermissions(models.Model):
     user = models.ForeignKey(TbUsers, models.DO_NOTHING)
+    permission = models.ForeignKey(AuthPermission, models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'tb_users_user_permissions'
+        unique_together = (('user', 'permission'),)
 
 
-permission = models.ForeignKey(AuthPermission, models.DO_NOTHING)
+class WxImgs(models.Model):
+    username = models.CharField(max_length=255, blank=True, null=True)
+    coverurl = models.CharField(max_length=255, blank=True, null=True)
+    imgstatus = models.IntegerField(blank=True, null=True)
+    lastlogin = models.CharField(max_length=255, blank=True, null=True)
 
-
-class Meta:
-    managed = False
-    db_table = 'tb_users_user_permissions'
-    unique_together = (('user', 'permission'),)
+    class Meta:
+        managed = False
+        db_table = 'wx_imgs'
